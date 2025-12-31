@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gravelmap.be — Carte gravel Belgique & France</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet (librairie de carte) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      font-size: 14px;
+    }
+
+    .legend div {
+      margin-bottom: 6px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .green { background: #2ecc71; }
+    .yellow { background: #f1c40f; }
+    .red { background: #e74c3c; }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div class="legend">
+  <div><span class="dot green"></span>Gravel probable</div>
+  <div><span class="dot yellow"></span>Mixte / incertain</div>
+  <div><span class="dot red"></span>À éviter</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // Création de la carte
+  const map = L.map('map').setView([50.5, 4.5], 7);
+
+  // Fond de carte OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Message temporaire (sera remplacé par les vrais chemins gravel)
+  L.popup()
+    .setLatLng([50.85, 4.35])
+    .setContent(
+      "<b>Gravelmap.be</b><br>Carte gravel Belgique & France<br><br>Données gravel en cours d'intégration 🚲"
+    )
+    .openOn(map);
+</script>
+
+</body>
+</html>
