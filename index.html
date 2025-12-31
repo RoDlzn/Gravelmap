@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <title>Gravelmap.be</title>
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
 html, body {
@@ -26,6 +23,25 @@ html, body {
   height: 100%;
 }
 
+/* CONTROLS */
+#controls {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+#controls button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2e7d32;
+  color: white;
+  font-size: 14px;
+}
+
+/* LEGEND */
 #legend {
   position: absolute;
   bottom: 20px;
@@ -55,23 +71,21 @@ html, body {
   border-radius: 3px;
 }
 
-#controls {
+/* TOOLTIP */
+#tooltip {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 1000;
+  pointer-events: none;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 2000;
+  display: none;
+  max-width: 260px;
 }
 
-#controls button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #2e7d32;
-  color: white;
-  font-size: 14px;
-}
-
+/* OSM INFO */
 #osm-info {
   position: absolute;
   bottom: 20px;
@@ -90,6 +104,7 @@ html, body {
 <div id="map-container">
 
   <div id="map"></div>
+  <div id="tooltip"></div>
 
   <div id="controls">
     <button onclick="loadData()">Charger cette zone</button>
@@ -113,19 +128,19 @@ html, body {
     <label class="legend-item">
       <input type="checkbox" checked onchange="toggleLayer('chemin_12')">
       <div class="legend-color" style="background:#228B22"></div>
-      Chemins grade 1–2 (non gravier ou surface inconnue)
+      Chemins grade 1–2 (surface non gravel)
     </label>
 
     <label class="legend-item">
-      <input type="checkbox" checked onchange="toggleLayer('grade3_gravel')">
+      <input type="checkbox" checked onchange="toggleLayer('grade3_surface')">
       <div class="legend-color" style="background:#FFD700"></div>
-      Gravier moins roulant (grade 3)
+      Grade 3 – surface connue
     </label>
 
     <label class="legend-item">
       <input type="checkbox" checked onchange="toggleLayer('grade3_unknown')">
       <div class="legend-color" style="background:#FF8C00"></div>
-      Grade 3 (non gravier ou surface inconnue)
+      Grade 3 – surface inconnue
     </label>
   </div>
 
@@ -140,18 +155,18 @@ html, body {
 
 <script>
 const map = L.map('map').setView([50.6, 4.5], 8);
+const tooltip = document.getElementById("tooltip");
 
-// Fond de carte
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Couches
+// Layer groups
 const layers = {
   paves: L.layerGroup().addTo(map),
   gravel_roulant: L.layerGroup().addTo(map),
   chemin_12: L.layerGroup().addTo(map),
-  grade3_gravel: L.layerGroup().addTo(map),
+  grade3_surface: L.layerGroup().addTo(map),
   grade3_unknown: L.layerGroup().addTo(map)
 };
 
@@ -161,12 +176,27 @@ function toggleLayer(name) {
     : map.addLayer(layers[name]);
 }
 
-// Nettoyage avant rechargement
 function clearLayers() {
   Object.values(layers).forEach(l => l.clearLayers());
 }
 
-// Chargement Overpass
+function showTooltip(e, tags) {
+  tooltip.style.display = "block";
+  tooltip.style.left = (e.originalEvent.pageX + 12) + "px";
+  tooltip.style.top = (e.originalEvent.pageY + 12) + "px";
+
+  tooltip.innerHTML = `
+    <strong>Chemin</strong><br>
+    Grade : ${tags.tracktype || "non renseigné"}<br>
+    Surface : ${tags.surface || "non renseignée"}<br>
+    Type : ${tags.highway || "—"}
+  `;
+}
+
+function hideTooltip() {
+  tooltip.style.display = "none";
+}
+
 async function loadData() {
   clearLayers();
 
@@ -179,12 +209,10 @@ async function loadData() {
     way["highway"="track"](${bbox});
     way["highway"="path"](${bbox});
   );
-  out geom;
+  out geom tags;
   `;
 
-  const url = "https://overpass-api.de/api/interpreter";
-
-  const response = await fetch(url, {
+  const response = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     body: query
   });
@@ -196,37 +224,50 @@ async function loadData() {
 
     const coords = el.geometry.map(p => [p.lat, p.lon]);
     const tags = el.tags || {};
-
     let layer = null;
-    let color = "#000";
+    let color = null;
 
-    if (tags.surface === "paving_stones") {
+    // Pavés
+    if (["sett","paving_stones","cobblestone"].includes(tags.surface)) {
       layer = layers.paves;
       color = "#999";
     }
-    else if (["gravel", "compacted"].includes(tags.surface)) {
+
+    // Gravier roulant
+    else if (["gravel","fine_gravel","compacted","pebblestone"].includes(tags.surface)) {
       layer = layers.gravel_roulant;
       color = "#7CFC00";
     }
-    else if (tags.tracktype === "grade1" || tags.tracktype === "grade2") {
+
+    // Grade 1–2 non gravel
+    else if ((tags.tracktype === "grade1" || tags.tracktype === "grade2")) {
       layer = layers.chemin_12;
       color = "#228B22";
     }
+
+    // Grade 3 surface connue
     else if (tags.tracktype === "grade3" && tags.surface) {
-      layer = layers.grade3_gravel;
+      layer = layers.grade3_surface;
       color = "#FFD700";
     }
+
+    // Grade 3 surface inconnue
     else if (tags.tracktype === "grade3") {
       layer = layers.grade3_unknown;
       color = "#FF8C00";
     }
 
     if (layer) {
-      L.polyline(coords, {
-        color: color,
+      const line = L.polyline(coords, {
+        color,
         weight: 4,
         opacity: 0.9
-      }).addTo(layer);
+      });
+
+      line.on("mousemove", e => showTooltip(e, tags));
+      line.on("mouseout", hideTooltip);
+
+      line.addTo(layer);
     }
   });
 }
