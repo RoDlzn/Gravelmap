@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Gravelmap.be — Carte gravel Belgique & France</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gravelmap.be</title>
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -16,69 +15,115 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      width: 100%;
       font-family: Arial, sans-serif;
     }
 
+    /* Conteneur global */
+    #map-container {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* Carte */
     #map {
       height: 100%;
       width: 100%;
     }
 
-    .legend {
+    /* Légende */
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      font-size: 14px;
+    }
+
+    #legend h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      border-radius: 3px;
+    }
+
+    /* Popup info OSM */
+    #osm-info {
       position: absolute;
       bottom: 20px;
       right: 20px;
-      background: white;
-      padding: 12px 14px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      font-size: 14px;
-      line-height: 1.4em;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
-
-    .legend div {
-      margin-bottom: 6px;
-      white-space: nowrap;
-    }
-
-    .dot {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    /* Couleurs Gravelmap */
-    .grey { background-color: #7f8c8d; }       /* Pavés */
-    .green-light { background-color: #2ecc71; } /* Graviers roulants */
-    .green-dark { background-color: #27ae60; }  /* Chemins roulants inconnus */
-    .yellow { background-color: #f1c40f; }      /* Gravel moins roulant */
-    .orange { background-color: #e67e22; }      /* Surface incertaine */
   </style>
 </head>
 
 <body>
 
-<div id="map"></div>
+<div id="map-container">
+  <div id="map"></div>
 
-<!-- Légende -->
-<div class="legend">
-  <div><span class="dot grey"></span>Pavés</div>
-  <div><span class="dot green-light"></span>Graviers roulants</div>
-  <div><span class="dot green-dark"></span>Chemin roulant (surface inconnue)</div>
-  <div><span class="dot yellow"></span>Gravier moins roulant</div>
-  <div><span class="dot orange"></span>Surface incertaine</div>
+  <!-- Légende -->
+  <div id="legend">
+    <h4>Types de revêtement</h4>
+
+    <div class="legend-item">
+      <div class="legend-color" style="background: #999;"></div>
+      Pavés
+    </div>
+
+    <div class="legend-item">
+      <div class="legend-color" style="background: #7CFC00;"></div>
+      Graviers roulants
+    </div>
+
+    <div class="legend-item">
+      <div class="legend-color" style="background: #228B22;"></div>
+      Chemins grade 1–2 (surface inconnue)
+    </div>
+
+    <div class="legend-item">
+      <div class="legend-color" style="background: #FFD700;"></div>
+      Gravier moins roulant (grade 3)
+    </div>
+
+    <div class="legend-item">
+      <div class="legend-color" style="background: #FF8C00;"></div>
+      Surface inconnue (grade 3)
+    </div>
+  </div>
+
+  <!-- Info OSM -->
+  <div id="osm-info">
+    Carte générée avec les données OpenStreetMap.<br>
+    La réalité peut parfois différer des données.
+  </div>
 </div>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-  // Initialisation de la carte
-  const map = L.map('map').setView([50.6, 4.7], 7);
+  const map = L.map('map').setView([50.5, 4.5], 8);
 
   // Fond de carte OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
