@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <title>Gravelmap.be — Carte gravel Belgique & France</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+L.popup()
+  .setLatLng([50.85, 4.35])
+  .setContent(
+    "<b>Gravelmap.be</b><br>" +
+    "Carte gravel Belgique & France<br><br>" +
+    "Carte générée à partir des données OpenStreetMap.<br>" +
+    "La réalité du terrain peut parfois différer des données."
+  )
+  .openOn(map);
   <!-- Leaflet (librairie de carte) -->
   <link
     rel="stylesheet"
