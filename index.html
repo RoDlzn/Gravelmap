@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+8        <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -113,7 +113,7 @@ html, body {
     <label class="legend-item">
       <input type="checkbox" checked onchange="toggleLayer('chemin_12')">
       <div class="legend-color" style="background:#228B22"></div>
-      Chemins grade 1–2 inconnus
+      Chemins grade 1–2 (Revêtements autres ou inconnus)
     </label>
 
     <label class="legend-item">
@@ -125,7 +125,7 @@ html, body {
     <label class="legend-item">
       <input type="checkbox" checked onchange="toggleLayer('grade3_unknown')">
       <div class="legend-color" style="background:#FF8C00"></div>
-      Grade 3 surface inconnue
+      Grade 3 (surface autre ou inconnue)
     </label>
   </div>
 
@@ -200,7 +200,7 @@ async function loadData() {
     let layer = null;
     let color = "#000";
 
-    if (tags.surface === "paving_stones") {
+    if (tags.surface === "paving_stones","sett") {
       layer = layers.paves;
       color = "#999";
     }
