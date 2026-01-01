@@ -158,7 +158,10 @@ html, body {
 const map = L.map('map').setView([50.6, 4.5], 8);
 const tooltip = document.getElementById("tooltip");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
 const layers = {
   paves: L.layerGroup().addTo(map),
