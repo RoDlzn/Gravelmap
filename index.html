@@ -7,18 +7,48 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-html, body { margin:0; padding:0; height:100%; font-family:Arial,sans-serif; }
+html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 #map-container { position:relative; height:100vh; }
 #map { height:100%; }
 
-#controls {
-  position:absolute; top:20px; left:20px; z-index:1000;
+/* Bouton central */
+#controls-center {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
 }
-#controls button {
-  display:block; margin-bottom:6px;
-  padding:8px 12px; border:none; border-radius:6px;
-  cursor:pointer; background:#2e7d32; color:white;
+
+#controls-center button {
+  padding:10px 14px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#2e7d32;
+  color:white;
 }
+
+/* Boutons en haut à droite */
+#controls-right {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+#controls-right button {
+  padding:8px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#444;
+  color:white;
+  font-size:13px;
+}
+
 
 #legend {
   position:absolute; bottom:20px; left:20px; z-index:1000;
@@ -52,12 +82,18 @@ html, body { margin:0; padding:0; height:100%; font-family:Arial,sans-serif; }
   <div id="map"></div>
   <div id="tooltip"></div>
 
-  <div id="controls">
-    <button onclick="loadData()">Charger cette zone</button>
-    <button onclick="openOSM()">Suggérer une modification</button>
-    <button onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
-    <button onclick="about()">À propos</button>
-  </div>
+  <!-- Bouton centré -->
+<div id="controls-center">
+  <button onclick="loadData()">Charger cette zone</button>
+</div>
+
+<!-- Boutons en haut à droite -->
+<div id="controls-right">
+  <button onclick="about()">À propos</button>
+  <button onclick="openOSM()">Suggérer une modification</button>
+  <button onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
+</div>
+
 
   <div id="legend">
     <strong>Revêtements</strong><br><br>
@@ -111,7 +147,13 @@ function showTooltip(e,t){
   tooltip.style.display="block";
   tooltip.style.left=e.originalEvent.pageX+12+"px";
   tooltip.style.top=e.originalEvent.pageY+12+"px";
-  tooltip.innerHTML=`<b>Chemin</b><br>Tracktype: ${t.tracktype||"—"}<br>Surface: ${t.surface||"—"}<br>Highway: ${t.highway||"—"}`;
+  tooltip.innerHTML = `
+  <strong>Chemin</strong><br>
+  Type : ${tags.highway || "—"}<br>
+  Tracktype : ${tags.tracktype || "non renseigné"}<br>
+  Surface : ${tags.surface || "non renseignée"}<br>
+  <strong>Roulabilité :</strong> ${tags.smoothness || "non renseignée"}
+`;
 }
 function hideTooltip(){ tooltip.style.display="none"; }
 
@@ -152,6 +194,14 @@ async function loadData(){
     else if(((g==="grade1"||g==="grade2") && (!s || ["ground","dirt","earth","grass","woodchips","unpaved","compacted","fine_gravel"].includes(s))) && !["bad","very_bad","horrible"].includes(sm)){
       LYR=layers.chemin_12; COL="#228B22";
     }
+      else if (
+  !tags.tracktype &&
+  ["compacted","fine_gravel"].includes(tags.surface) &&
+  !["asphalt","concrete","paved"].includes(tags.surface)
+) {
+  layer = layers.chemin_12;
+  color = "#228B22"; // vert foncé
+}
     else if(g==="grade3" && ["compacted","gravel","fine_gravel","clay"].includes(s) && !["bad","very_bad","horrible"].includes(sm)){
       LYR=layers.grade3_surface; COL="#FFD700";
     }
