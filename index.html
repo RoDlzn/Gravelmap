@@ -143,7 +143,7 @@ const layers={
 function toggleLayer(n){ map.hasLayer(layers[n])?map.removeLayer(layers[n]):map.addLayer(layers[n]); }
 function clearLayers(){ Object.values(layers).forEach(l=>l.clearLayers()); }
 
-function showTooltip(e,t){
+function showTooltip(e, tags){
   tooltip.style.display="block";
   tooltip.style.left=e.originalEvent.pageX+12+"px";
   tooltip.style.top=e.originalEvent.pageY+12+"px";
@@ -163,7 +163,7 @@ function openOSM(){
 }
 
 function about(){
-  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent varier (météo, entretien, saison).\n\nToujours adapter son itinéraire à son niveau.");
+  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent varier (météo, entretien, saison).\n\n[...]");
 }
 
 async function loadData(){
@@ -194,14 +194,11 @@ async function loadData(){
     else if(((g==="grade1"||g==="grade2") && (!s || ["ground","dirt","earth","grass","woodchips","unpaved","compacted","fine_gravel"].includes(s))) && !["bad","very_bad","horrible"].includes(sm)){
       LYR=layers.chemin_12; COL="#228B22";
     }
-      else if (
-  !tags.tracktype &&
-  ["compacted","fine_gravel"].includes(tags.surface) &&
-  !["asphalt","concrete","paved"].includes(tags.surface)
-) {
-  layer = layers.chemin_12;
-  color = "#228B22"; // vert foncé
-}
+    else if (!t.tracktype && ["compacted","fine_gravel","clay"].includes(t.surface) && !["asphalt","concrete","paved"].includes(t.surface)) {
+      // chemins sans tracktype mais surface indiquant un chemin roulant
+      LYR = layers.chemin_12;
+      COL = "#228B22";
+    }
     else if(g==="grade3" && ["compacted","gravel","fine_gravel","clay"].includes(s) && !["bad","very_bad","horrible"].includes(sm)){
       LYR=layers.grade3_surface; COL="#FFD700";
     }
