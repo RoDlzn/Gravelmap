@@ -127,7 +127,9 @@ function about(){
 async function loadData(){
   clearLayers();
   const b=map.getBounds();
-  const q=`[out:json];(way["highway"~"track|path|cycleway"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}));out geom tags;`;
+ const q=`[out:json];(
+  way["highway"~"track|path|cycleway|unclassified|service"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});
+);out geom tags;`;
   const r=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q});
   const d=await r.json();
 
