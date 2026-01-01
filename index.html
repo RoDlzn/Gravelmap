@@ -65,24 +65,36 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   position:absolute; pointer-events:none;
   background:rgba(0,0,0,0.8); color:#fff;
   padding:6px 8px; border-radius:4px;
-  font-size:12px; z-index:2000; display:none;
+  font-size:12px; z-index:4000; display:none;
 }
 
 #osm-info {
   position:absolute; bottom:20px; right:20px;
-  background:rgba(255,255,255,0.9);
+  background:rgba(255,255,255,0.95);
   padding:8px 10px; border-radius:8px;
   font-size:12px;
+  z-index:3500;
 }
 
 #progress {
   position:absolute; top:60px; left:50%;
   transform:translateX(-50%);
-  z-index:1100;
+  z-index:4100;
   background:rgba(0,0,0,0.7); color:#fff;
   padding:6px 10px; border-radius:6px; display:none;
   font-size:13px;
 }
+
+#center-radius {
+  position:absolute; top:100px; left:50%;
+  transform:translateX(-50%);
+  z-index:3300;
+  background:rgba(255,255,255,0.95);
+  padding:6px 10px; border-radius:6px; display:none;
+  font-size:13px;
+}
+
+#controls-center small { display:block; font-size:11px; color:#eee; margin-top:6px; }
 </style>
 </head>
 
@@ -91,10 +103,12 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   <div id="map"></div>
   <div id="tooltip"></div>
   <div id="progress"></div>
+  <div id="center-radius"></div>
 
   <!-- Bouton centré -->
 <div id="controls-center">
   <button id="btn-load" onclick="loadData()">Charger cette zone</button>
+  <small><label><input type="checkbox" id="use-radius" checked> Utiliser radius max si zone trop grande</label></small>
 </div>
 
 <!-- Boutons en haut à droite -->
@@ -135,31 +149,40 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /*
-  Optimisations ajoutées :
-  - preferCanvas pour Leaflet (meilleures performances quand il y a beaucoup de lignes)
-  - découpage bbox en tuiles si la zone est "trop grande"
-  - requêtes Overpass en série/parallèle limitée (pour éviter timeouts / erreurs)
-  - simplification basique des géométries (élimine points trop proches)
-  - cache par tuile (évite rechargements sur la même zone)
-  - retour visuel de progression
+  Changements principaux par rapport à la version précédente :
+  - Si la bbox est "trop grande", on passe en mode "radius centered" (chargement uniquement d'un cercle centré).
+    Cela évite les timeouts Overpass quand l'utilisateur est fortement dézoomé.
+  - Suppression du découpage automatique/chargement en tuiles par défaut (cause d'effets de fluidité).
+    Chargement déclenché uniquement par le bouton "Charger cette zone".
+  - Pendant le déplacement de la carte, les calques vectoriels sont temporairement masqués pour améliorer la fluidité.
+  - On affiche un cercle indicatif et un message quand on utilise le radius centré.
+  - Cache simple en mémoire par bbox pour éviter rechargements immédiats.
+  - preferCanvas pour Leaflet + renderer canvas lors de la création des polylines.
 */
 
+const MAX_RADIUS_METERS = 30000; // radius max à charger (par défaut 30 km)
+const MAX_BBOX_DIAGONAL_METERS = 90000; // si la diagonal bbox > 90km on bascule en mode radius centered
+
 const map = L.map('map', { preferCanvas: true }).setView([50.6,4.5],8);
-const tooltip=document.getElementById("tooltip");
+const tooltip = document.getElementById("tooltip");
 const progressEl = document.getElementById("progress");
+const centerRadiusEl = document.getElementById("center-radius");
 const btnLoad = document.getElementById("btn-load");
+const useRadiusCheckbox = document.getElementById("use-radius");
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'© OpenStreetMap'
 }).addTo(map);
 
-const layers={
-  paves:L.layerGroup().addTo(map),
-  gravel_roulant:L.layerGroup().addTo(map),
-  chemin_12:L.layerGroup().addTo(map),
-  grade3_surface:L.layerGroup().addTo(map),
-  grade3_unknown:L.layerGroup().addTo(map),
-  grade4:L.layerGroup().addTo(map)
+const rendererCanvas = L.canvas();
+
+const layers = {
+  paves: L.layerGroup().addTo(map),
+  gravel_roulant: L.layerGroup().addTo(map),
+  chemin_12: L.layerGroup().addTo(map),
+  grade3_surface: L.layerGroup().addTo(map),
+  grade3_unknown: L.layerGroup().addTo(map),
+  grade4: L.layerGroup().addTo(map)
 };
 
 function toggleLayer(n){ map.hasLayer(layers[n])?map.removeLayer(layers[n]):map.addLayer(layers[n]); }
@@ -185,12 +208,11 @@ function openOSM(){
 }
 
 function about(){
-  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent différer des données OpenStreetMap.\nZoomez sur la zone à découvrir et cliquez sur \"charger cette zone\" pour mettre en surbrillance les chemins gravel (charger une zone trop large pourrait provoquer des timeouts — la carte découpe et charge automatiquement en morceaux).");
+  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent différer des données OpenStreetMap.\nZoomez sur la zone à découvrir et cliquez sur \"charger cette zone\" pour mettre en surbrillance les chemins gravel.\nSi la zone est très grande, la carte chargera uniquement un cercle centré pour éviter les timeouts.");
 }
 
 /* --- Utilitaires --- */
 
-// distance (m) entre 2 coordonnées (Haversine)
 function haversineMeters(a,b){
   const R = 6371000;
   const toRad = Math.PI/180;
@@ -205,7 +227,6 @@ function haversineMeters(a,b){
 }
 
 // simplification basique : supprime les points trop proches (minDist en mètres)
-// très rapide et efficace pour réduire beaucoup de petits segments
 function simplifyCoords(coords, minDistMeters=2){
   if(!coords || coords.length<=2) return coords;
   const out=[coords[0]];
@@ -214,51 +235,36 @@ function simplifyCoords(coords, minDistMeters=2){
     const cur = coords[i];
     if(haversineMeters(last, cur) >= minDistMeters) out.push(cur);
   }
-  // always keep last
   if(out[out.length-1] !== coords[coords.length-1]) out.push(coords[coords.length-1]);
   return out;
 }
 
-/* --- Overpass / découpage --- */
-
-const tileCache = new Map(); // cache simple par bbox string
-
-// découpe une bbox Leaflet en tuiles carrées selon un max span en degrés
-function splitBounds(bounds, maxLatSpan=0.4, maxLngSpan=0.6){
-  const s = bounds.getSouth(), n = bounds.getNorth(), w = bounds.getWest(), e = bounds.getEast();
-  const latSpan = n - s;
-  const lngSpan = e - w;
-  const rows = Math.max(1, Math.ceil(latSpan / maxLatSpan));
-  const cols = Math.max(1, Math.ceil(lngSpan / maxLngSpan));
-  const tileLat = latSpan / rows;
-  const tileLng = lngSpan / cols;
-  const tiles = [];
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const ts = s + r*tileLat;
-      const tn = (r===rows-1) ? n : (s + (r+1)*tileLat);
-      const tw = w + c*tileLng;
-      const te = (c===cols-1) ? e : (w + (c+1)*tileLng);
-      tiles.push({s:ts, w:tw, n:tn, e:te});
-    }
-  }
-  return tiles;
+// bbox -> degrees delta from center for a given radius (approx.)
+function radiusToLatLngDeltaMeters(lat, meters){
+  const latDeg = meters / 111320; // approx
+  const lngDeg = meters / (111320 * Math.cos(lat * Math.PI / 180) || 1);
+  return { latDeg, lngDeg };
 }
 
-function bboxKey(tile){ return `${tile.s.toFixed(6)},${tile.w.toFixed(6)},${tile.n.toFixed(6)},${tile.e.toFixed(6)}`; }
+const bboxCache = new Map();
 
-async function fetchTile(tile, idx, total){
-  const key = bboxKey(tile);
-  if(tileCache.has(key)) {
-    // console.log("cache hit", key);
-    updateProgress(idx+1, total);
-    return tileCache.get(key);
-  }
+function bboxKey(b){ return `${b.s.toFixed(6)},${b.w.toFixed(6)},${b.n.toFixed(6)},${b.e.toFixed(6)}`; }
 
-  // Overpass query : on maintient le même filtre qu'avant
+function updateProgress(show, txt){
+  if(!show){ progressEl.style.display='none'; return; }
+  progressEl.style.display='block';
+  progressEl.textContent = txt || 'Chargement…';
+}
+
+/* --- Overpass fetch (single bbox) --- */
+
+async function fetchBBox(b){
+  const key = bboxKey(b);
+  if(bboxCache.has(key)) return bboxCache.get(key);
+
   const q = `[out:json][timeout:25];
 (
-  way["highway"~"track|path|cycleway|unclassified|service"](${tile.s},${tile.w},${tile.n},${tile.e});
+  way["highway"~"track|path|cycleway|unclassified|service"](${b.s},${b.w},${b.n},${b.e});
 );
 out geom tags;`;
 
@@ -266,24 +272,15 @@ out geom tags;`;
     const r = await fetch("https://overpass-api.de/api/interpreter", { method:"POST", body: q });
     if(!r.ok) throw new Error("overpass error "+r.status);
     const d = await r.json();
-    tileCache.set(key, d);
-    updateProgress(idx+1, total);
+    bboxCache.set(key, d);
     return d;
   }catch(err){
-    console.warn("Overpass fetch failed for tile", tile, err);
-    updateProgress(idx+1, total);
+    console.warn("Overpass fetch failed for bbox", b, err);
     return { elements: [] };
   }
 }
 
-function updateProgress(done, total){
-  if(total<=1){ progressEl.style.display="none"; return; }
-  progressEl.style.display="block";
-  progressEl.textContent = `Chargement ${done}/${total}...`;
-  if(done>=total) setTimeout(()=>progressEl.style.display="none", 600);
-}
-
-/* --- Traitement et affichage --- */
+/* --- Traitement des données et affichage --- */
 
 function handleOverpassData(d){
   d.elements.forEach(el=>{
@@ -320,8 +317,9 @@ function handleOverpassData(d){
     }
 
     if(LYR){
-      const simplified = simplifyCoords(c, 2); // tol 2 m (ajuster si nécessaire)
-      const poly = L.polyline(simplified, {color:COL, weight:4, opacity:0.9, renderer: L.canvas()});
+      const simplified = simplifyCoords(c, 2);
+      const poly = L.polyline(simplified, {color:COL, weight:4, opacity:0.9, renderer: rendererCanvas, interactive: true});
+      // attach lightweight handlers
       poly.on("mousemove", e => showTooltip(e, t));
       poly.on("mouseout", hideTooltip);
       poly.addTo(LYR);
@@ -329,38 +327,104 @@ function handleOverpassData(d){
   });
 }
 
+/* --- Mode de chargement : bbox ou center-radius --- */
+
+let currentCircle = null;
+
+function showCenterCircle(center, radiusMeters){
+  if(currentCircle) map.removeLayer(currentCircle);
+  currentCircle = L.circle([center.lat, center.lng], { radius: radiusMeters, color:'#2e7d32', weight:1.5, fill:false, pane: 'overlayPane' }).addTo(map);
+  centerRadiusEl.style.display='block';
+  centerRadiusEl.textContent = `Chargement centré (rayon ${Math.round(radiusMeters/1000)} km)`;
+}
+function hideCenterCircle(){
+  if(currentCircle){ map.removeLayer(currentCircle); currentCircle=null; }
+  centerRadiusEl.style.display='none';
+}
+
 /* --- Fonction principale de chargement --- */
 
 async function loadData(){
-  // UI / reset
   btnLoad.disabled = true;
   btnLoad.textContent = "Chargement…";
+  updateProgress(true, "Préparation…");
+  hideTooltip();
+
   clearLayers();
+  hideCenterCircle();
 
   const bounds = map.getBounds();
-  const tiles = splitBounds(bounds);
-  const total = tiles.length;
+  // compute diagonal length
+  const sw = [bounds.getSouth(), bounds.getWest()];
+  const ne = [bounds.getNorth(), bounds.getEast()];
+  const diagonal = haversineMeters(sw, ne);
 
-  // limite de concurrence : n requêtes Overpass simultanées
-  const CONCURRENCY = 2;
-  const results = [];
-
-  // fetch par lots pour ne pas surcharger Overpass
-  for(let i=0;i<tiles.length;i+=CONCURRENCY){
-    const batch = tiles.slice(i, i+CONCURRENCY).map((t, idx)=>fetchTile(t, i+idx, total));
-    const batchRes = await Promise.all(batch);
-    results.push(...batchRes);
-    // petit délai pour être plus "poli" si on a beaucoup de tuiles
-    await new Promise(r => setTimeout(r, 250));
+  let bboxToFetch = null;
+  let usedRadiusMode = false;
+  if(useRadiusCheckbox.checked && diagonal > MAX_BBOX_DIAGONAL_METERS){
+    // use center radius mode
+    usedRadiusMode = true;
+    const center = map.getCenter();
+    const radiusMeters = Math.min(MAX_RADIUS_METERS, Math.floor(diagonal/4)); // if diagonal is huge, use smaller radius; cap to MAX
+    const delta = radiusToLatLngDeltaMeters(center.lat, radiusMeters);
+    bboxToFetch = { s: center.lat - delta.latDeg, w: center.lng - delta.lngDeg, n: center.lat + delta.latDeg, e: center.lng + delta.lngDeg };
+    showCenterCircle(center, radiusMeters);
+    updateProgress(true, "Chargement (mode radius centré) …");
+  }else{
+    bboxToFetch = { s: bounds.getSouth(), w: bounds.getWest(), n: bounds.getNorth(), e: bounds.getEast() };
+    updateProgress(true, "Chargement de la bbox affichée …");
   }
 
-  // traiter et afficher
-  results.forEach(r => handleOverpassData(r));
-
-  btnLoad.disabled = false;
-  btnLoad.textContent = "Charger cette zone";
+  try{
+    const data = await fetchBBox(bboxToFetch);
+    handleOverpassData(data);
+  }catch(err){
+    console.error(err);
+  }finally{
+    updateProgress(false);
+    btnLoad.disabled = false;
+    btnLoad.textContent = "Charger cette zone";
+    // retirer le cercle après un certain temps (optionnel)
+    setTimeout(()=>{ if(currentCircle) hideCenterCircle(); }, 8000);
+  }
 }
 
+/* --- Fluidité pendant le drag --- */
+/* Masque temporairement le pane des vecteurs pendant le drag pour éviter le lag lié au redessin */
+map.on('movestart', ()=> {
+  // cacher overlay pane (vecteurs) pendant le drag
+  try{
+    const op = map.getPanes().overlayPane;
+    op.style.pointerEvents = 'none';
+    op.style.display = 'none';
+  }catch(e){ /* ignore */ }
+  hideTooltip();
+});
+
+map.on('moveend', ()=> {
+  try{
+    const op = map.getPanes().overlayPane;
+    op.style.display = '';
+    op.style.pointerEvents = '';
+  }catch(e){ /* ignore */ }
+});
+
+/* --- UI helpers --- */
+// masquer tooltip quand on clique ailleurs
+map.on('click', hideTooltip);
+
+// améliorer affichage en zoomant : réduire poids des lignes quand on est dézoomé
+map.on('zoomend', ()=>{
+  const z = map.getZoom();
+  const weight = Math.max(1, Math.round(4 * (z / 12))); // ajuste selon besoin
+  Object.values(layers).forEach(lg => {
+    lg.eachLayer(layer => {
+      if(layer.setStyle) layer.setStyle({ weight });
+    });
+  });
+});
+
+/* --- Initial --- */
 </script>
 </body>
 </html>
