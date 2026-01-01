@@ -7,170 +7,167 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-}
+html, body { margin:0; padding:0; height:100%; font-family:Arial,sans-serif; }
+#map-container { position:relative; height:100vh; }
+#map { height:100%; }
 
-#map-container {
-  position: relative;
-  height: 100vh;
-}
-
-#map {
-  height: 100%;
-}
-
-/* CONTROLS */
 #controls {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 1000;
+  position:absolute; top:20px; left:20px; z-index:1000;
 }
-
 #controls button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #2e7d32;
-  color: white;
-  font-size: 14px;
-  margin-bottom: 6px;
+  display:block; margin-bottom:6px;
+  padding:8px 12px; border:none; border-radius:6px;
+  cursor:pointer; background:#2e7d32; color:white;
 }
 
-/* LEGEND */
 #legend {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
-  background: rgba(255,255,255,0.95);
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  font-size: 13px;
+  position:absolute; bottom:20px; left:20px; z-index:1000;
+  background:rgba(255,255,255,0.95);
+  padding:12px; border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  font-size:14px;
 }
+.legend-item { display:flex; align-items:center; margin-bottom:6px; }
+.legend-item input { margin-right:6px; }
+.legend-color { width:16px; height:16px; margin-right:6px; border-radius:3px; }
 
-/* TOOLTIP */
 #tooltip {
-  position: absolute;
-  pointer-events: none;
-  background: rgba(0,0,0,0.85);
-  color: #fff;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  z-index: 2000;
-  display: none;
-  max-width: 280px;
+  position:absolute; pointer-events:none;
+  background:rgba(0,0,0,0.8); color:#fff;
+  padding:6px 8px; border-radius:4px;
+  font-size:12px; z-index:2000; display:none;
 }
 
-/* POPUP INFO */
-#info-popup {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  max-width: 420px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  z-index: 3000;
-  display: none;
-}
-
-/* RIGHT PANEL */
-#right-panel {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 180px;
-  z-index: 1000;
-}
-
-.panel-box {
-  background: rgba(255,255,255,0.95);
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  font-size: 12px;
-  text-align: center;
+#osm-info {
+  position:absolute; bottom:20px; right:20px;
+  background:rgba(255,255,255,0.9);
+  padding:8px 10px; border-radius:8px;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
-
 <div id="map-container">
   <div id="map"></div>
   <div id="tooltip"></div>
 
-  <!-- POPUP INFO -->
-  <div id="info-popup">
-    <h3>À propos de Gravelmap</h3>
-    <p>
-      Cette carte met en évidence des chemins potentiellement adaptés à la pratique du gravel,
-      sur base des données OpenStreetMap.
-    </p>
-    <p>
-      Les informations ne sont pas parfaites : l’état réel du chemin (ornières, boue, dégradation)
-      n’est pas toujours renseigné.
-    </p>
-    <p>
-      Utilisez cette carte comme un <strong>outil de découverte</strong>, puis vérifiez avec
-      Street View, photos ou autres cartes.
-    </p>
-    <button onclick="document.getElementById('info-popup').style.display='none'">Fermer</button>
-  </div>
-
-  <!-- CONTROLS -->
   <div id="controls">
     <button onclick="loadData()">Charger cette zone</button>
-    <button onclick="document.getElementById('info-popup').style.display='block'">À propos</button>
+    <button onclick="openOSM()">Suggérer une modification</button>
+    <button onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
+    <button onclick="about()">À propos</button>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div id="right-panel">
-    <div class="panel-box">
-      <strong>Suggérer une correction</strong><br>
-      <a href="https://www.openstreetmap.org" target="_blank">Modifier sur OSM</a>
-    </div>
-    <div class="panel-box">
-      <strong>Soutenir le projet</strong><br>
-      <a href="https://ko-fi.com" target="_blank">Faire un don</a>
-    </div>
-    <div class="panel-box">
-      <!-- Emplacement publicité -->
-      Publicité
-    </div>
+  <div id="legend">
+    <strong>Revêtements</strong><br><br>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('paves')">
+      <div class="legend-color" style="background:#999"></div>Pavés</label>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('gravel_roulant')">
+      <div class="legend-color" style="background:#7CFC00"></div>Vrais Gravels roulants</label>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('chemin_12')">
+      <div class="legend-color" style="background:#228B22"></div>Autres chemins roulants</label>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_surface')">
+      <div class="legend-color" style="background:#FFD700"></div>Chemins Gravel plus techniques</label>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_unknown')">
+      <div class="legend-color" style="background:#FF8C00"></div>Chemins plus techniques</label>
+
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade4')">
+      <div class="legend-color" style="background:#d32f2f"></div>Chemins engagés</label>
   </div>
 
+  <div id="osm-info">
+    Données OpenStreetMap – indicatives uniquement
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-const map = L.map('map').setView([50.6, 4.5], 8);
-const tooltip = document.getElementById("tooltip");
+const map = L.map('map').setView([50.6,4.5],8);
+const tooltip=document.getElementById("tooltip");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '© OpenStreetMap contributors'
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© OpenStreetMap'
 }).addTo(map);
 
-const layers = {
-  paves: L.layerGroup().addTo(map),
-  greenLight: L.layerGroup().addTo(map),
-  greenDark: L.layerGroup().addTo(map),
-  yellow: L.layerGroup().addTo(map),
-  orange: L.layerGroup().addTo(map),
-  red: L.layerGroup().addTo(map)
+const layers={
+  paves:L.layerGroup().addTo(map),
+  gravel_roulant:L.layerGroup().addTo(map),
+  chemin_12:L.layerGroup().addTo(map),
+  grade3_surface:L.layerGroup().addTo(map),
+  grade3_unknown:L.layerGroup().addTo(map),
+  grade4:L.layerGroup().addTo(map)
 };
 
-function clearLayers() {
-  Object.values(layers).forEach(l => l.clearLa
+function toggleLayer(n){ map.hasLayer(layers[n])?map.removeLayer(layers[n]):map.addLayer(layers[n]); }
+function clearLayers(){ Object.values(layers).forEach(l=>l.clearLayers()); }
+
+function showTooltip(e,t){
+  tooltip.style.display="block";
+  tooltip.style.left=e.originalEvent.pageX+12+"px";
+  tooltip.style.top=e.originalEvent.pageY+12+"px";
+  tooltip.innerHTML=`<b>Chemin</b><br>Tracktype: ${t.tracktype||"—"}<br>Surface: ${t.surface||"—"}<br>Highway: ${t.highway||"—"}`;
+}
+function hideTooltip(){ tooltip.style.display="none"; }
+
+function openOSM(){
+  const c=map.getCenter();
+  window.open(`https://www.openstreetmap.org/#map=${map.getZoom()}/${c.lat}/${c.lng}`,'_blank');
+}
+
+function about(){
+  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent varier (météo, entretien, saison).\n\nToujours adapter son itinéraire à son niveau.");
+}
+
+async function loadData(){
+  clearLayers();
+  const b=map.getBounds();
+  const q=`[out:json];(way["highway"~"track|path|cycleway"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}));out geom tags;`;
+  const r=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q});
+  const d=await r.json();
+
+  d.elements.forEach(el=>{
+    if(!el.geometry)return;
+    const c=el.geometry.map(p=>[p.lat,p.lon]);
+    const t=el.tags||{};
+    const s=t.surface;
+    const g=t.tracktype;
+    const sm=t.smoothness;
+
+    let LYR=null,COL=null;
+
+    if(["sett","unhewn_cobblestone","cobblestone","paving_stones"].includes(s)){
+      LYR=layers.paves; COL="#999";
+    }
+    else if((g==="grade1"||g==="grade2") && ["compacted","gravel","fine_gravel","clay"].includes(s) && !["bad","very_bad","horrible"].includes(sm)){
+      LYR=layers.gravel_roulant; COL="#7CFC00";
+    }
+    else if(((g==="grade1"||g==="grade2") && (!s || ["ground","dirt","earth","grass","woodchips","unpaved","compacted","fine_gravel"].includes(s))) && !["bad","very_bad","horrible"].includes(sm)){
+      LYR=layers.chemin_12; COL="#228B22";
+    }
+    else if(g==="grade3" && ["compacted","gravel","fine_gravel","clay"].includes(s) && !["bad","very_bad","horrible"].includes(sm)){
+      LYR=layers.grade3_surface; COL="#FFD700";
+    }
+    else if(g==="grade3"){
+      LYR=layers.grade3_unknown; COL="#FF8C00";
+    }
+    else if(g==="grade4"){
+      LYR=layers.grade4; COL="#d32f2f";
+    }
+
+    if(LYR){
+      const l=L.polyline(c,{color:COL,weight:4,opacity:0.9});
+      l.on("mousemove",e=>showTooltip(e,t));
+      l.on("mouseout",hideTooltip);
+      l.addTo(LYR);
+    }
+  });
+}
+</script>
+</body>
+</html>
