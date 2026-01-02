@@ -32,12 +32,14 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 }
 
 #controls-center button {
-  padding:10px 14px;
+  padding:14px 18px; /* agrandi */
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
   background:#2e7d32;
   color:white;
+  font-size:16px; /* agrandi */
+  font-weight:600;
 }
 
 /* Boutons en haut à droite */
@@ -48,6 +50,7 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   z-index: 1000;
   display: flex;
   gap: 8px;
+  align-items:center;
 }
 
 #controls-right button {
@@ -60,7 +63,21 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   font-size:13px;
 }
 
+#btn-donate {
+  background: #ad1457; /* rose foncé pas trop agressif */
+}
 
+/* language select */
+#lang-select {
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid rgba(0,0,0,0.1);
+  background:white;
+  font-size:13px;
+  cursor:pointer;
+}
+
+/* legend and other boxes */
 #legend {
   position:absolute; bottom:20px; left:20px; z-index:1000;
   background:rgba(255,255,255,0.95);
@@ -106,6 +123,34 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 }
 
 #controls-center small { display:block; font-size:11px; color:#eee; margin-top:6px; }
+
+/* About modal */
+#about-modal {
+  display:none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 5000;
+  width: 420px;
+  max-width: calc(100% - 40px);
+  background: white;
+  border-radius:10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  padding: 16px;
+  font-size:14px;
+}
+#about-modal header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+#about-modal .close-btn {
+  background:transparent; border:none; font-size:18px; cursor:pointer;
+}
+#about-backdrop {
+  display:none;
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.35);
+  z-index: 4990;
+}
 </style>
 </head>
   <section style="display:none;">
@@ -140,41 +185,60 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   <!-- Bouton centré -->
 <div id="controls-center">
   <button id="btn-load" onclick="loadData()">Charger cette zone</button>
-  <small><label><input type="checkbox" id="use-radius" checked> Utiliser radius max si zone trop grande</label></small>
+  <small><label><input type="checkbox" id="use-radius" checked> <span id="use-radius-label">Utiliser radius max si zone trop grande</span></label></small>
 </div>
 
 <!-- Boutons en haut à droite -->
 <div id="controls-right">
-  <button onclick="about()">À propos</button>
-  <button onclick="openOSM()">Suggérer une modification</button>
-  <button onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
+  <button id="btn-about" onclick="about()">À propos</button>
+  <button id="btn-osm" onclick="openOSM()">Suggérer une modification</button>
+  <button id="btn-donate" onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
+
+  <!-- language selector -->
+  <select id="lang-select" onchange="setLang(this.value)" title="Select language">
+    <option value="fr">FR</option>
+    <option value="en">EN</option>
+    <option value="nl">NL</option>
+  </select>
 </div>
 
 
   <div id="legend">
-    <strong>Revêtements</strong><br><br>
+    <strong id="legend-title">Revêtements</strong><br><br>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('paves')">
-      <div class="legend-color" style="background:#999"></div>Pavés</label>
+      <div class="legend-color" style="background:#999"></div><span data-i18n="paves">Pavés</span></label>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('gravel_roulant')">
-      <div class="legend-color" style="background:#7CFC00"></div>Vrais Gravels roulants</label>
+      <div class="legend-color" style="background:#7CFC00"></div><span data-i18n="gravel_roulant">Vrais Gravels roulants</span></label>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('chemin_12')">
-      <div class="legend-color" style="background:#228B22"></div>Autres chemins roulants</label>
+      <div class="legend-color" style="background:#228B22"></div><span data-i18n="chemin_12">Autres chemins roulants</span></label>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_surface')">
-      <div class="legend-color" style="background:#FFD700"></div>Chemins Gravel plus techniques</label>
+      <div class="legend-color" style="background:#FFD700"></div><span data-i18n="grade3_surface">Chemins Gravel plus techniques</span></label>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_unknown')">
-      <div class="legend-color" style="background:#FF8C00"></div>Chemins plus techniques</label>
+      <div class="legend-color" style="background:#FF8C00"></div><span data-i18n="grade3_unknown">Chemins plus techniques</span></label>
 
     <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade4')">
-      <div class="legend-color" style="background:#d32f2f"></div>Chemins engagés</label>
+      <div class="legend-color" style="background:#d32f2f"></div><span data-i18n="grade4">Chemins engagés</span></label>
   </div>
 
   <div id="osm-info">
-    Données OpenStreetMap – indicatives uniquement
+    <span id="osm-info-text">Données OpenStreetMap – indicatives uniquement</span>
+  </div>
+
+  <!-- About modal -->
+  <div id="about-backdrop" onclick="hideAbout()"></div>
+  <div id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
+    <header>
+      <strong id="about-title">À propos</strong>
+      <button class="close-btn" onclick="hideAbout()" aria-label="Close">&times;</button>
+    </header>
+    <div id="about-content">
+      <!-- content filled dynamically -->
+    </div>
   </div>
 </div>
 
@@ -190,6 +254,10 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   - On affiche un cercle indicatif et un message quand on utilise le radius centré.
   - Cache simple en mémoire par bbox pour éviter rechargements immédiats.
   - preferCanvas pour Leaflet + renderer canvas lors de la création des polylines.
+  - Ajout d'un sélecteur de langue et traduction des éléments visibles (FR/EN/NL).
+  - Agrandissement du bouton "Charger cette zone".
+  - Mise en rose foncé du bouton "Faire un don".
+  - Le bouton "À propos" ouvre maintenant une fenêtre flottante au-dessus de la carte.
 */
 
 const MAX_RADIUS_METERS = 30000; // radius max à charger (par défaut 30 km)
@@ -217,6 +285,122 @@ const layers = {
   grade4: L.layerGroup().addTo(map)
 };
 
+/* --- I18n simple --- */
+let CURRENT_LANG = 'fr';
+const I18N = {
+  fr: {
+    btnLoad: "Charger cette zone",
+    btnLoadLoading: "Chargement…",
+    useRadiusLabel: "Utiliser radius max si zone trop grande",
+    about: "À propos",
+    openOSM: "Suggérer une modification",
+    donate: "Faire un don ❤️",
+    legendTitle: "Revêtements",
+    paves: "Pavés",
+    gravel_roulant: "Vrais Gravels roulants",
+    chemin_12: "Autres chemins roulants",
+    grade3_surface: "Chemins Gravel plus techniques",
+    grade3_unknown: "Chemins plus techniques",
+    grade4: "Chemins engagés",
+    osmInfo: "Données OpenStreetMap – indicatives uniquement",
+    progressPreparing: "Préparation…",
+    progressLoadingBBox: "Chargement de la bbox affichée …",
+    progressLoadingRadius: "Chargement (mode radius centré) …",
+    centerRadiusText: "Chargement centré (rayon {km} km)",
+    tooltip_title: "Chemin",
+    tooltip_type: "Type",
+    tooltip_tracktype: "Tracktype",
+    tooltip_surface: "Surface",
+    tooltip_rideability: "Roulabilité",
+    about_title: "Gravelmap.be — À propos",
+    about_text: `<p>Cette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap. Les conditions réelles peuvent différer des données OpenStreetMap. Les utilisateurs sont invités à contribuer et améliorer les données sur <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a>.</p>`
+  },
+  en: {
+    btnLoad: "Load this area",
+    btnLoadLoading: "Loading…",
+    useRadiusLabel: "Use max radius if area too large",
+    about: "About",
+    openOSM: "Suggest an edit",
+    donate: "Make a donation ❤️",
+    legendTitle: "Surfaces",
+    paves: "Paved / Cobbles",
+    gravel_roulant: "True rideable gravels",
+    chemin_12: "Other rideable tracks",
+    grade3_surface: "More technical gravel",
+    grade3_unknown: "Technical tracks",
+    grade4: "Engaged / Hard tracks",
+    osmInfo: "OpenStreetMap data – indicative only",
+    progressPreparing: "Preparing…",
+    progressLoadingBBox: "Loading displayed bbox …",
+    progressLoadingRadius: "Loading (centered radius mode) …",
+    centerRadiusText: "Centered load (radius {km} km)",
+    tooltip_title: "Path",
+    tooltip_type: "Type",
+    tooltip_tracktype: "Tracktype",
+    tooltip_surface: "Surface",
+    tooltip_rideability: "Rideability",
+    about_title: "Gravelmap.be — About",
+    about_text: `<p>This map classifies tracks according to estimated rideability based on OpenStreetMap data. Real conditions may differ from OSM data. Users are encouraged to contribute and improve the data on <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a>.</p>`
+  },
+  nl: {
+    btnLoad: "Laad dit gebied",
+    btnLoadLoading: "Laden…",
+    useRadiusLabel: "Gebruik maximale straal als gebied te groot is",
+    about: "Over",
+    openOSM: "Bewerkingsvoorstel",
+    donate: "Doneer ❤️",
+    legendTitle: "Oppervlakken",
+    paves: "Kasseien / Verhard",
+    gravel_roulant: "Echte rijdbare gravels",
+    chemin_12: "Andere rijdbare paden",
+    grade3_surface: "Technischere gravels",
+    grade3_unknown: "Technische paden",
+    grade4: "Zware paden",
+    osmInfo: "OpenStreetMap-gegevens – alleen ter indicatie",
+    progressPreparing: "Voorbereiden…",
+    progressLoadingBBox: "Laadt zichtbare bbox …",
+    progressLoadingRadius: "Laden (gecentreerde straalmodus) …",
+    centerRadiusText: "Gecentreerde laad (straal {km} km)",
+    tooltip_title: "Pad",
+    tooltip_type: "Type",
+    tooltip_tracktype: "Tracktype",
+    tooltip_surface: "Oppervlak",
+    tooltip_rideability: "Rijbaarheid",
+    about_title: "Gravelmap.be — Over",
+    about_text: `<p>Deze kaart classificeert paden op basis van de geschatte rijbaarheid uit OpenStreetMap-gegevens. Werkelijke omstandigheden kunnen afwijken. Gebruikers worden aangemoedigd om bij te dragen en de gegevens te verbeteren op <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a>.</p>`
+  }
+};
+
+function setLang(lang){
+  if(!I18N[lang]) lang = 'fr';
+  CURRENT_LANG = lang;
+  // UI updates
+  const t = I18N[lang];
+  btnLoad.textContent = t.btnLoad;
+  document.getElementById('use-radius-label').textContent = t.useRadiusLabel;
+  document.getElementById('btn-about').textContent = t.about;
+  document.getElementById('btn-osm').textContent = t.openOSM;
+  document.getElementById('btn-donate').textContent = t.donate;
+  document.getElementById('legend-title').textContent = t.legendTitle;
+  document.getElementById('osm-info-text').textContent = t.osmInfo;
+
+  // legend items
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    if(t[key]) el.textContent = t[key];
+  });
+
+  // about modal title/content if visible
+  document.getElementById('about-title').textContent = t.about_title || t.about;
+  document.getElementById('about-content').innerHTML = (t.about_text || '');
+
+  // progress/center messages are created dynamically when used
+}
+
+// init language from selector default
+document.getElementById('lang-select').value = 'fr';
+setLang('fr');
+
 function toggleLayer(n){ map.hasLayer(layers[n])?map.removeLayer(layers[n]):map.addLayer(layers[n]); }
 function clearLayers(){ Object.values(layers).forEach(l=>l.clearLayers()); }
 
@@ -224,12 +408,13 @@ function showTooltip(e, tags){
   tooltip.style.display="block";
   tooltip.style.left=e.originalEvent.pageX+12+"px";
   tooltip.style.top=e.originalEvent.pageY+12+"px";
+  const t = I18N[CURRENT_LANG];
   tooltip.innerHTML = `
-  <strong>Chemin</strong><br>
-  Type : ${tags.highway || "—"}<br>
-  Tracktype : ${tags.tracktype || "non renseigné"}<br>
-  Surface : ${tags.surface || "non renseignée"}<br>
-  <strong>Roulabilité :</strong> ${tags.smoothness || "non renseignée"}
+  <strong>${t.tooltip_title}</strong><br>
+  ${t.tooltip_type} : ${tags.highway || "—"}<br>
+  ${t.tooltip_tracktype} : ${tags.tracktype || "—"}<br>
+  ${t.tooltip_surface} : ${tags.surface || "—"}<br>
+  <strong>${t.tooltip_rideability} :</strong> ${tags.smoothness || "—"}
 `;
 }
 function hideTooltip(){ tooltip.style.display="none"; }
@@ -240,7 +425,14 @@ function openOSM(){
 }
 
 function about(){
-  alert("Gravelmap.be\n\nCette carte classe les chemins selon leur roulabilité estimée à partir des données OpenStreetMap.\nLes conditions réelles peuvent différer des données OpenStreetMap.\nZoomez sur la zone à découvrir et cliquez sur \"charger cette zone\" pour mettre en surbrillance les chemins gravel.\nSi la zone est très grande, la carte chargera uniquement un cercle centré pour éviter les timeouts.");
+  // show modal (content already set by setLang)
+  document.getElementById('about-backdrop').style.display = 'block';
+  document.getElementById('about-modal').style.display = 'block';
+}
+
+function hideAbout(){
+  document.getElementById('about-backdrop').style.display = 'none';
+  document.getElementById('about-modal').style.display = 'none';
 }
 
 /* --- Utilitaires --- */
@@ -285,7 +477,7 @@ function bboxKey(b){ return `${b.s.toFixed(6)},${b.w.toFixed(6)},${b.n.toFixed(6
 function updateProgress(show, txt){
   if(!show){ progressEl.style.display='none'; return; }
   progressEl.style.display='block';
-  progressEl.textContent = txt || 'Chargement…';
+  progressEl.textContent = txt || (I18N[CURRENT_LANG].btnLoadLoading || 'Chargement…');
 }
 
 /* --- Overpass fetch (single bbox) --- */
@@ -367,7 +559,10 @@ function showCenterCircle(center, radiusMeters){
   if(currentCircle) map.removeLayer(currentCircle);
   currentCircle = L.circle([center.lat, center.lng], { radius: radiusMeters, color:'#2e7d32', weight:1.5, fill:false, pane: 'overlayPane' }).addTo(map);
   centerRadiusEl.style.display='block';
-  centerRadiusEl.textContent = `Chargement centré (rayon ${Math.round(radiusMeters/1000)} km)`;
+  const t = I18N[CURRENT_LANG];
+  const km = Math.round(radiusMeters/1000);
+  const textTemplate = t.centerRadiusText || `Chargement centré (rayon {km} km)`;
+  centerRadiusEl.textContent = textTemplate.replace('{km}', km);
 }
 function hideCenterCircle(){
   if(currentCircle){ map.removeLayer(currentCircle); currentCircle=null; }
@@ -378,8 +573,8 @@ function hideCenterCircle(){
 
 async function loadData(){
   btnLoad.disabled = true;
-  btnLoad.textContent = "Chargement…";
-  updateProgress(true, "Préparation…");
+  btnLoad.textContent = I18N[CURRENT_LANG].btnLoadLoading || "Chargement…";
+  updateProgress(true, I18N[CURRENT_LANG].progressPreparing || "Préparation…");
   hideTooltip();
 
   clearLayers();
@@ -401,10 +596,10 @@ async function loadData(){
     const delta = radiusToLatLngDeltaMeters(center.lat, radiusMeters);
     bboxToFetch = { s: center.lat - delta.latDeg, w: center.lng - delta.lngDeg, n: center.lat + delta.latDeg, e: center.lng + delta.lngDeg };
     showCenterCircle(center, radiusMeters);
-    updateProgress(true, "Chargement (mode radius centré) …");
+    updateProgress(true, I18N[CURRENT_LANG].progressLoadingRadius || "Chargement (mode radius centré) …");
   }else{
     bboxToFetch = { s: bounds.getSouth(), w: bounds.getWest(), n: bounds.getNorth(), e: bounds.getEast() };
-    updateProgress(true, "Chargement de la bbox affichée …");
+    updateProgress(true, I18N[CURRENT_LANG].progressLoadingBBox || "Chargement de la bbox affichée …");
   }
 
   try{
@@ -415,7 +610,7 @@ async function loadData(){
   }finally{
     updateProgress(false);
     btnLoad.disabled = false;
-    btnLoad.textContent = "Charger cette zone";
+    btnLoad.textContent = I18N[CURRENT_LANG].btnLoad || "Charger cette zone";
     // retirer le cercle après un certain temps (optionnel)
     setTimeout(()=>{ if(currentCircle) hideCenterCircle(); }, 8000);
   }
@@ -457,6 +652,9 @@ map.on('zoomend', ()=>{
 });
 
 /* --- Initial --- */
+// ensure translations align with initial UI
+setLang(document.getElementById('lang-select').value || 'fr');
+
 </script>
 </body>
 </html>
