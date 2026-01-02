@@ -11,7 +11,7 @@
 <link rel="alternate" href="https://gravelsegments.com/?lang=nl" hreflang="nl">
 <link rel="alternate" href="https://gravelsegments.com/" hreflang="x-default">
 
-<meta name="description" id="meta-description" content="Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur[...]
+<meta name="description" id="meta-description" content="Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap.">
 <meta name="keywords" id="meta-keywords" content="gravel, vélo gravel, chemins gravel, carte gravel, belgique, pistes gravel, revêtement, surface, gravier, sentier, cycle">
 
 <meta name="robots" content="index, follow">
@@ -206,6 +206,9 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 }
 </style>
 </head>
+
+<body>
+
   <section style="display:none;">
   <h1>Carte gravel en Belgique</h1>
   <p>
@@ -227,8 +230,6 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   </p>
 </section>
 
-
-<body>
 <div id="map-container">
   <div id="map"></div>
   <div id="tooltip"></div>
@@ -333,7 +334,7 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
       "@id":"https://gravelsegments.com/?lang=fr",
       "url":"https://gravelsegments.com/?lang=fr",
       "name":"Gravel Segments – Explorer les chemins gravels",
-      "description":"Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap. Découvrez revêtem[...]
+      "description":"Gravel Segments est une carte interactive pour le vélo gravel en Belgique. Basée sur OpenStreetMap.",
       "inLanguage":"fr"
     },
     {
@@ -341,7 +342,7 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
       "@id":"https://gravelsegments.com/?lang=en",
       "url":"https://gravelsegments.com/?lang=en",
       "name":"Gravel Segments – Explore gravel routes",
-      "description":"Gravel Segments is an interactive map for gravel cycling: rideable tracks, technical trails, cobbles and paths in Belgium. Based on OpenStreetMap. Discover surfaces, rideability a[...]
+      "description":"Gravel Segments is an interactive map for gravel cycling in Belgium. Based on OpenStreetMap.",
       "inLanguage":"en"
     },
     {
@@ -349,7 +350,7 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
       "@id":"https://gravelsegments.com/?lang=nl",
       "url":"https://gravelsegments.com/?lang=nl",
       "name":"Gravel Segments – Verken gravelpaden",
-      "description":"Gravel Segments is een interactieve kaart voor gravelrijden: berijdbare paden, technische routes, kasseien en trails in België. Gebaseerd op OpenStreetMap. Ontdek oppervlakken, b[...]
+      "description":"Gravel Segments is een interactieve kaart voor gravelrijden in België. Gebaseerd op OpenStreetMap.",
       "inLanguage":"nl"
     }
   ]
@@ -396,7 +397,7 @@ let CURRENT_LANG = 'fr';
 const I18N = {
   fr: {
     metaTitle: "Gravel Segments – Explorer les chemins gravels",
-    metaDescription: "Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap. Découvrez revête[...]
+    metaDescription: "Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap.",
     metaKeywords: "gravel, vélo gravel, chemins gravel, carte gravel, belgique, pistes gravel, revêtement, surface, gravier, sentier, cycle",
     btnLoad: "Charger cette zone",
     btnLoadLoading: "Chargement…",
@@ -440,7 +441,7 @@ Les utilisateurs sont invités à contribuer et améliorer les données sur <a h
 <ul>
   <li><span style="color:grey;">Gris :</span> Pavés</li>
   <li><span style="color:lightgreen;">Vert clair :</span> Chemins de gravier avec bonne roulabilité et revêtement solide (grade 1 et 2, roulabilité moyenne à excellente)</li>
-  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans grade renseigné</li>
+  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans[...]
   <li><span style="color:gold;">Jaune :</span> Chemins de gravier de grade 3 ou sentiers de gravier grade inconnu, roulabilité moyenne à excellente</li>
   <li><span style="color:orange;">Orange :</span> Chemins de grade 3 toutes surfaces sauf gravier ou surface inconnue, roulabilité moyenne à excellente</li>
   <li><span style="color:red;">Rouge :</span> Chemins de grade 4, surface irrégulière, pouvant nécessiter un très bon niveau technique</li>
@@ -455,7 +456,7 @@ Afin d’aider <strong>Gravelsegments.com</strong> à rester gratuit, n’hésit
   },
   en: {
     metaTitle: "Gravel Segments – Explore gravel routes",
-    metaDescription: "Gravel Segments is an interactive map for gravel cycling: rideable tracks, technical trails, cobbles and paths in Belgium. Based on OpenStreetMap. Discover surfaces, rideability [...]
+    metaDescription: "Gravel Segments is an interactive map for gravel cycling: rideable tracks, technical trails, cobbles and paths in Belgium. Based on OpenStreetMap.",
     metaKeywords: "gravel, gravel cycling, gravel map, gravel belgium, trails, surfaces, rideability, dirt roads, cobbles",
     btnLoad: "Load this area",
     btnLoadLoading: "Loading…",
@@ -499,7 +500,7 @@ Les utilisateurs sont invités à contribuer et améliorer les données sur <a h
 <ul>
   <li><span style="color:grey;">Gris :</span> Pavés</li>
   <li><span style="color:lightgreen;">Vert clair :</span> Chemins de gravier avec bonne roulabilité et revêtement solide (grade 1 et 2, roulabilité moyenne à excellente)</li>
-  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans grade renseigné</li>
+  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans[...]
   <li><span style="color:gold;">Jaune :</span> Chemins de gravier de grade 3 ou sentiers de gravier grade inconnu, roulabilité moyenne à excellente</li>
   <li><span style="color:orange;">Orange :</span> Chemins de grade 3 toutes surfaces sauf gravier ou surface inconnue, roulabilité moyenne à excellente</li>
   <li><span style="color:red;">Rouge :</span> Chemins de grade 4, surface irrégulière, pouvant nécessiter un très bon niveau technique</li>
@@ -514,7 +515,7 @@ Afin d’aider <strong>Gravelsegments.com</strong> à rester gratuit, n’hésit
   },
   nl: {
     metaTitle: "Gravel Segments – Verken gravelpaden",
-    metaDescription: "Gravel Segments is een interactieve kaart voor gravelrijden: berijdbare paden, technische routes, kasseien en trails in België. Gebaseerd op OpenStreetMap. Ontdek oppervlakken, [...]
+    metaDescription: "Gravel Segments is een interactieve kaart voor gravelrijden: berijdbare paden, technische routes, kasseien en trails in België. Gebaseerd op OpenStreetMap.",
     metaKeywords: "gravel, gravel fietsen, gravel kaart, gravel belgië, paden, oppervlakken, berijdbaarheid, kasseien",
     btnLoad: "Laad dit gebied",
     btnLoadLoading: "Laden…",
@@ -558,7 +559,7 @@ Les utilisateurs sont invités à contribuer et améliorer les données sur <a h
 <ul>
   <li><span style="color:grey;">Gris :</span> Pavés</li>
   <li><span style="color:lightgreen;">Vert clair :</span> Chemins de gravier avec bonne roulabilité et revêtement solide (grade 1 et 2, roulabilité moyenne à excellente)</li>
-  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans grade renseigné</li>
+  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans[...]
   <li><span style="color:gold;">Jaune :</span> Chemins de gravier de grade 3 ou sentiers de gravier grade inconnu, roulabilité moyenne à excellente</li>
   <li><span style="color:orange;">Orange :</span> Chemins de grade 3 toutes surfaces sauf gravier ou surface inconnue, roulabilité moyenne à excellente</li>
   <li><span style="color:red;">Rouge :</span> Chemins de grade 4, surface irrégulière, pouvant nécessiter un très bon niveau technique</li>
