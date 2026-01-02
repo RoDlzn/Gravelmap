@@ -4,16 +4,31 @@
 <meta charset="UTF-8">
   <title>Gravel Segments – Explorer les chemins gravels</title>
 
-<meta name="description" content="Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap.">
+<!-- Canonical + hreflang alternates -->
+<link rel="canonical" href="https://gravelsegments.com/">
+<link rel="alternate" href="https://gravelsegments.com/?lang=fr" hreflang="fr">
+<link rel="alternate" href="https://gravelsegments.com/?lang=en" hreflang="en">
+<link rel="alternate" href="https://gravelsegments.com/?lang=nl" hreflang="nl">
+<link rel="alternate" href="https://gravelsegments.com/" hreflang="x-default">
 
-<meta name="keywords" content="gravel, vélo gravel, chemins gravel, carte gravel, gravel belgique, pistes gravel, surface, revêtement, gravier, sentier">
+<meta name="description" id="meta-description" content="Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap. Découvrez revêtements, praticabilité et niveaux de difficulté.">
+<meta name="keywords" id="meta-keywords" content="gravel, vélo gravel, chemins gravel, carte gravel, belgique, pistes gravel, revêtement, surface, gravier, sentier, cycle">
 
 <meta name="robots" content="index, follow">
 
-<meta property="og:title" content="Gravel Segments – Carte gravel interactive">
-<meta property="og:description" content="Carte gravel interactive pour découvrir les chemins roulants et techniques en Belgique.">
+<!-- Open Graph (id'd so we can update content dynamically on language switch) -->
+<meta property="og:title" id="og-title" content="Gravel Segments – Carte gravel interactive">
+<meta property="og:description" id="og-description" content="Carte gravel interactive pour découvrir les chemins roulants et techniques en Belgique.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://gravelsegments.com">
+<meta property="og:url" content="https://gravelsegments.com/">
+<meta property="og:site_name" content="Gravel Segments">
+<meta property="og:locale" id="og-locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:locale:alternate" content="nl_NL">
+
+<!-- Favicon (ajoutez les fichiers recommandés sous assets/) -->
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/logo-180.png">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
@@ -63,8 +78,13 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   font-size:13px;
 }
 
+/* Donate primary button - visually distinct */
 #btn-donate {
-  background: #ad1457; /* rose foncé pas trop agressif */
+  background: linear-gradient(180deg,#d81b60,#ad1457);
+  box-shadow: 0 4px 10px rgba(173,20,87,0.28);
+  padding:9px 12px;
+  font-weight:700;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* language select */
@@ -96,14 +116,30 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   font-size:12px; z-index:4000; display:none;
 }
 
+/* osm info moved a bit up to make place for brand box */
 #osm-info {
-  position:absolute; bottom:20px; right:20px;
+  position:absolute; bottom:80px; right:20px;
   background:rgba(255,255,255,0.95);
   padding:8px 10px; border-radius:8px;
   font-size:12px;
   z-index:3500;
 }
 
+/* brand/logo box bottom-right */
+#brand-box {
+  position:absolute; bottom:20px; right:20px;
+  z-index:3600;
+  background:rgba(255,255,255,0.95);
+  padding:8px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.25);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#brand-box img { height:40px; width:auto; display:block; }
+
+/* progress and center radius */
 #progress {
   position:absolute; top:60px; left:50%;
   transform:translateX(-50%);
@@ -125,7 +161,8 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 #controls-center small { display:block; font-size:11px; color:#eee; margin-top:6px; }
 
 /* About modal */
-#about-modal {
+.modal-backdrop { display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.35); z-index: 4990; }
+.modal {
   display:none;
   position: absolute;
   top: 50%;
@@ -140,16 +177,32 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
   padding: 16px;
   font-size:14px;
 }
-#about-modal header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-#about-modal .close-btn {
+.modal header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.modal .close-btn {
   background:transparent; border:none; font-size:18px; cursor:pointer;
 }
-#about-backdrop {
-  display:none;
-  position:absolute;
-  top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.35);
-  z-index: 4990;
+
+/* Donate modal specific */
+#donate-modal .donate-buttons { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+.donate-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:8px;
+  border: none;
+  font-weight:700;
+  cursor:pointer;
+  font-size:15px;
+  color: white;
+}
+.donate-btn.paypal { background:#005ea6; }
+.donate-btn.buyme { background:#ffdd00; color:#2b2b2b; }
+
+/* small responsive tweak */
+@media (min-width: 600px){
+  #donate-modal .donate-buttons { flex-direction:row; }
 }
 </style>
 </head>
@@ -192,7 +245,8 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
 <div id="controls-right">
   <button id="btn-about" onclick="about()">À propos</button>
   <button id="btn-osm" onclick="openOSM()">Suggérer une modification</button>
-  <button id="btn-donate" onclick="window.open('https://paypal.me/RomainDlz','_blank')">Faire un don ❤️</button>
+  <!-- donate button now opens a modal instead of directly opening a link -->
+  <button id="btn-donate" onclick="openDonateModal()">Faire un don ❤️</button>
 
   <!-- language selector -->
   <select id="lang-select" onchange="setLang(this.value)" title="Select language">
@@ -229,9 +283,17 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
     <span id="osm-info-text">Données OpenStreetMap – indicatives uniquement</span>
   </div>
 
+  <!-- Brand/logo box (bottom-right) -->
+  <div id="brand-box" title="Gravel Map">
+    <!-- place your logo at assets/logo.png (see notes below) -->
+    <a href="https://gravelsegments.com" target="_blank" rel="noreferrer">
+      <img src="assets/logo.png" alt="Gravel Map logo">
+    </a>
+  </div>
+
   <!-- About modal -->
-  <div id="about-backdrop" onclick="hideAbout()"></div>
-  <div id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
+  <div id="about-backdrop" class="modal-backdrop" onclick="hideAbout()"></div>
+  <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
     <header>
       <strong id="about-title">À propos</strong>
       <button class="close-btn" onclick="hideAbout()" aria-label="Close">&times;</button>
@@ -240,24 +302,68 @@ html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
       <!-- content filled dynamically -->
     </div>
   </div>
+
+  <!-- Donate modal -->
+  <div id="donate-backdrop" class="modal-backdrop" onclick="hideDonate()"></div>
+  <div id="donate-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="donate-title">
+    <header>
+      <strong id="donate-title">Faire un don ❤️</strong>
+      <button class="close-btn" onclick="hideDonate()" aria-label="Close">&times;</button>
+    </header>
+    <div id="donate-content">
+      <!-- filled dynamically via setLang -->
+      <div class="donate-buttons" id="donate-buttons-placeholder"></div>
+    </div>
+  </div>
 </div>
+
+<!-- Structured data with localized WebPage entries -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"WebSite",
+      "@id":"https://gravelsegments.com/#website",
+      "url":"https://gravelsegments.com/",
+      "name":"Gravel Segments"
+    },
+    {
+      "@type":"WebPage",
+      "@id":"https://gravelsegments.com/?lang=fr",
+      "url":"https://gravelsegments.com/?lang=fr",
+      "name":"Gravel Segments – Explorer les chemins gravels",
+      "description":"Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap. Découvrez revêtements, praticabilité et niveaux de difficulté.",
+      "inLanguage":"fr"
+    },
+    {
+      "@type":"WebPage",
+      "@id":"https://gravelsegments.com/?lang=en",
+      "url":"https://gravelsegments.com/?lang=en",
+      "name":"Gravel Segments – Explore gravel routes",
+      "description":"Gravel Segments is an interactive map for gravel cycling: rideable tracks, technical trails, cobbles and paths in Belgium. Based on OpenStreetMap. Discover surfaces, rideability and difficulty levels.",
+      "inLanguage":"en"
+    },
+    {
+      "@type":"WebPage",
+      "@id":"https://gravelsegments.com/?lang=nl",
+      "url":"https://gravelsegments.com/?lang=nl",
+      "name":"Gravel Segments – Verken gravelpaden",
+      "description":"Gravel Segments is een interactieve kaart voor gravelrijden: berijdbare paden, technische routes, kasseien en trails in België. Gebaseerd op OpenStreetMap. Ontdek oppervlakken, berijdbaarheid en moeilijkheidsgraad.",
+      "inLanguage":"nl"
+    }
+  ]
+}
+</script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /*
-  Changements principaux par rapport à la version précédente :
-  - Si la bbox est "trop grande", on passe en mode "radius centered" (chargement uniquement d'un cercle centré).
-    Cela évite les timeouts Overpass quand l'utilisateur est fortement dézoomé.
-  - Suppression du découpage automatique/chargement en tuiles par défaut (cause d'effets de fluidité).
-    Chargement déclenché uniquement par le bouton "Charger cette zone".
-  - Pendant le déplacement de la carte, les calques vectoriels sont temporairement masqués pour améliorer la fluidité.
-  - On affiche un cercle indicatif et un message quand on utilise le radius centré.
-  - Cache simple en mémoire par bbox pour éviter rechargements immédiats.
-  - preferCanvas pour Leaflet + renderer canvas lors de la création des polylines.
-  - Ajout d'un sélecteur de langue et traduction des éléments visibles (FR/EN/NL).
-  - Agrandissement du bouton "Charger cette zone".
-  - Mise en rose foncé du bouton "Faire un don".
-  - Le bouton "À propos" ouvre maintenant une fenêtre flottante au-dessus de la carte.
+  Traductions SEO + mise à jour dynamique des meta tags :
+  - Ajout de metaTitle, metaDescription et metaKeywords par langue dans I18N.
+  - setLang met à jour document.title, meta description, meta keywords, og:title, og:description, canonical href & og:locale.
+  - L'approche améliore l'affichage partagé / indexation quand le site est chargé côté client (JS met à jour les métadonnées).
+  - Idéal : faire des URLs distinctes côté serveur (/fr/, /en/, /nl/) ou SSR pour un SEO optimal ; cf. recommandations en dessous.
 */
 
 const MAX_RADIUS_METERS = 30000; // radius max à charger (par défaut 30 km)
@@ -285,10 +391,13 @@ const layers = {
   grade4: L.layerGroup().addTo(map)
 };
 
-/* --- I18n simple --- */
+/* --- I18n simple (ajout des meta SEO) --- */
 let CURRENT_LANG = 'fr';
 const I18N = {
   fr: {
+    metaTitle: "Gravel Segments – Explorer les chemins gravels",
+    metaDescription: "Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap. Découvrez revêtements, praticabilité et niveaux de difficulté.",
+    metaKeywords: "gravel, vélo gravel, chemins gravel, carte gravel, belgique, pistes gravel, revêtement, surface, gravier, sentier, cycle",
     btnLoad: "Charger cette zone",
     btnLoadLoading: "Chargement…",
     useRadiusLabel: "Utiliser radius max si zone trop grande",
@@ -325,29 +434,21 @@ Pour un usage optimal, utilisez Google Street View, la vue satellite ou d’autr
 
 <p>
 Les utilisateurs sont invités à contribuer et améliorer les données sur <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a>.
-</p>
-
-<p><strong>Légende :</strong></p>
-<ul>
-  <li><span style="color:grey;">Gris :</span> Pavés</li>
-  <li><span style="color:lightgreen;">Vert clair :</span> Chemins de gravier avec bonne roulabilité et revêtement solide (grade 1 et 2, roulabilité moyenne à excellente)</li>
-  <li><span style="color:darkgreen;">Vert foncé :</span> Chemins avec bonne roulabilité mais revêtement non-gravier ou non renseigné (grade 1 et 2), incluant surfaces compactes et gravier fin sans grade renseigné</li>
-  <li><span style="color:gold;">Jaune :</span> Chemins de gravier de grade 3 ou sentiers de gravier grade inconnu, roulabilité moyenne à excellente</li>
-  <li><span style="color:orange;">Orange :</span> Chemins de grade 3 toutes surfaces sauf gravier ou surface inconnue, roulabilité moyenne à excellente</li>
-  <li><span style="color:red;">Rouge :</span> Chemins de grade 4, surface irrégulière, pouvant nécessiter un très bon niveau technique</li>
-</ul>
-
-<p>
-Afin d’aider <strong>Gravelsegments.com</strong> à rester gratuit, n’hésitez pas à faire un don. Chaque centime sera bien utilisé.
-</p>`
+</p>`,
+    donate_modal_title: "Faire un don ❤️",
+    paypal_btn: "Faire un don via PayPal ❤️",
+    buyme_btn: "Doner via Buy Me a Coffee ❤️"
   },
   en: {
+    metaTitle: "Gravel Segments – Explore gravel routes",
+    metaDescription: "Gravel Segments is an interactive map for gravel cycling: rideable tracks, technical trails, cobbles and paths in Belgium. Based on OpenStreetMap. Discover surfaces, rideability and difficulty levels.",
+    metaKeywords: "gravel, gravel cycling, gravel map, gravel belgium, trails, surfaces, rideability, dirt roads, cobbles",
     btnLoad: "Load this area",
     btnLoadLoading: "Loading…",
     useRadiusLabel: "Use max radius if area too large",
     about: "About",
     openOSM: "Suggest an edit",
-    donate: "Make a donation ❤️",
+    donate: "Donate ❤️",
     legendTitle: "Surfaces",
     paves: "Paved / Cobbles",
     gravel_roulant: "True rideable gravels",
@@ -367,7 +468,7 @@ Afin d’aider <strong>Gravelsegments.com</strong> à rester gratuit, n’hésit
     tooltip_rideability: "Rideability",
     about_title: "Gravelsegments.com — About",
     about_text: `<p>
-This map classifies tracks according to their <strong>estimated rideability</strong> based on OpenStreetMap data. It provides a one-click overview of potential "gravel" tracks in the explored area. Actual conditions may, however, differ from OSM data.
+This map classifies tracks according to their <strong>estimated rideability</strong> based on OpenStreetMap data. It provides a one-click overview of potential "gravel" tracks in the explored area.
 </p>
 
 <p>
@@ -376,23 +477,15 @@ For optimal use, use Google Street View, the satellite view, or other maps to co
 
 <p>
 Users are invited to contribute and improve the data on <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a>.
-</p>
-
-<p><strong>Legend:</strong></p>
-<ul>
-  <li><span style="color:grey;">Grey:</span> Cobbles</li>
-  <li><span style="color:lightgreen;">Light green:</span> Gravel tracks with good rideability and solid surface (grade 1 and 2, fair to excellent rideability)</li>
-  <li><span style="color:darkgreen;">Dark green:</span> Tracks with good rideability but non-gravel or unspecified surface (grade 1 and 2), including compacted surfaces and fine gravel without grade specified</li>
-  <li><span style="color:gold;">Gold:</span> Grade 3 gravel tracks or unknown-grade gravel trails, fair to excellent rideability</li>
-  <li><span style="color:orange;">Orange:</span> Grade 3 tracks with non-gravel or unknown surface, fair to excellent rideability</li>
-  <li><span style="color:red;">Red:</span> Grade 4 tracks, irregular surface, may require a very high technical level</li>
-</ul>
-
-<p>
-To help <strong>Gravelsegments.com</strong> remain free, please consider making a donation. Every cent will be put to good use.
-</p>`
+</p>`,
+    donate_modal_title: "Donate ❤️",
+    paypal_btn: "Donate with PayPal ❤️",
+    buyme_btn: "Buy me a coffee ❤️"
   },
   nl: {
+    metaTitle: "Gravel Segments – Verken gravelpaden",
+    metaDescription: "Gravel Segments is een interactieve kaart voor gravelrijden: berijdbare paden, technische routes, kasseien en trails in België. Gebaseerd op OpenStreetMap. Ontdek oppervlakken, berijdbaarheid en moeilijkheidsgraad.",
+    metaKeywords: "gravel, gravel fietsen, gravel kaart, gravel belgië, paden, oppervlakken, berijdbaarheid, kasseien",
     btnLoad: "Laad dit gebied",
     btnLoadLoading: "Laden…",
     useRadiusLabel: "Gebruik maximale straal als gebied te groot is",
@@ -418,7 +511,7 @@ To help <strong>Gravelsegments.com</strong> remain free, please consider making 
     tooltip_rideability: "Rijbaarheid",
     about_title: "Gravelsegments.com — Over",
     about_text: `<p>
-Deze kaart classificeert paden op basis van hun <strong>geschatte rijbaarheid</strong> uit OpenStreetMap-gegevens. Het biedt in één klik een overzicht van potentiële "gravel"-paden in het onderzochte gebied. De werkelijke omstandigheden kunnen echter afwijken van de OSM-gegevens.
+Deze kaart classificeert paden op basis van hun <strong>geschatte rijbaarheid</strong> uit OpenStreetMap-gegevens. Het biedt in één klik een overzicht van potentiële "gravel"-paden in het onderzochte gebied.
 </p>
 
 <p>
@@ -427,29 +520,19 @@ Voor optimaal gebruik, gebruik Google Street View, de satellietweergave of ander
 
 <p>
 Gebruikers worden uitgenodigd om bij te dragen en de gegevens op <a href="https://www.openstreetmap.org" target="_blank" rel="noreferrer">OpenStreetMap</a> te verbeteren.
-</p>
-
-<p><strong>Legenda:</strong></p>
-<ul>
-  <li><span style="color:grey;">Grijs:</span> Kasseien</li>
-  <li><span style="color:lightgreen;">Lichtgroen:</span> Grindpaden met goede rijbaarheid en stevige ondergrond (graad 1 en 2, gemiddelde tot uitstekende rijbaarheid)</li>
-  <li><span style="color:darkgreen;">Donkergroen:</span> Paden met goede rijbaarheid maar niet-grind of niet-gespecificeerd oppervlak (graad 1 en 2), inclusief compacte oppervlakken en fijn grind zonder opgegeven graad</li>
-  <li><span style="color:gold;">Goud:</span> Graad 3 grindpaden of grindpaden met onbekende graad, gemiddelde tot uitstekende rijbaarheid</li>
-  <li><span style="color:orange;">Oranje:</span> Graad 3 paden met niet-grind of onbekend oppervlak, gemiddelde tot uitstekende rijbaarheid</li>
-  <li><span style="color:red;">Rood:</span> Graad 4 paden, oneffen oppervlak, kan een zeer hoog technisch niveau vereisen</li>
-</ul>
-
-<p>
-Om <strong>Gravelsegments.com</strong> gratis te houden, overweeg alstublieft een donatie. Elke cent wordt goed besteed.
-</p>`
+</p>`,
+    donate_modal_title: "Doneer ❤️",
+    paypal_btn: "Doneer via PayPal ❤️",
+    buyme_btn: "Doneer via Buy Me a Coffee ❤️"
   }
 };
 
 function setLang(lang){
   if(!I18N[lang]) lang = 'fr';
   CURRENT_LANG = lang;
-  // UI updates
   const t = I18N[lang];
+
+  // UI texts
   btnLoad.textContent = t.btnLoad;
   document.getElementById('use-radius-label').textContent = t.useRadiusLabel;
   document.getElementById('btn-about').textContent = t.about;
@@ -468,7 +551,42 @@ function setLang(lang){
   document.getElementById('about-title').textContent = t.about_title || t.about;
   document.getElementById('about-content').innerHTML = (t.about_text || '');
 
-  // progress/center messages are created dynamically when used
+  // donate modal content
+  document.getElementById('donate-title').textContent = t.donate_modal_title || t.donate;
+  const donateButtonsHolder = document.getElementById('donate-buttons-placeholder');
+  donateButtonsHolder.innerHTML = `
+    <button class="donate-btn paypal" onclick="window.open('https://www.paypal.com/paypalme/RomainDlz','_blank')">${t.paypal_btn}</button>
+    <button class="donate-btn buyme" onclick="window.open('https://buymeacoffee.com/gravelsegments','_blank')">${t.buyme_btn}</button>
+  `;
+
+  // SEO meta updates
+  document.title = t.metaTitle || document.title;
+
+  const metaDesc = document.getElementById('meta-description');
+  const metaKeys = document.getElementById('meta-keywords');
+  const ogTitle = document.getElementById('og-title');
+  const ogDesc = document.getElementById('og-description');
+  const ogLocale = document.getElementById('og-locale');
+  const canonical = document.querySelector('link[rel="canonical"]');
+
+  if(metaDesc) metaDesc.setAttribute('content', t.metaDescription || '');
+  if(metaKeys) metaKeys.setAttribute('content', t.metaKeywords || '');
+  if(ogTitle) ogTitle.setAttribute('content', t.metaTitle || '');
+  if(ogDesc) ogDesc.setAttribute('content', t.metaDescription || '');
+
+  // set og:locale and canonical href to language-specific query URL (helps crawlers understand alternates when using JS)
+  if(ogLocale){
+    if(lang === 'fr') ogLocale.setAttribute('content','fr_FR');
+    if(lang === 'en') ogLocale.setAttribute('content','en_GB');
+    if(lang === 'nl') ogLocale.setAttribute('content','nl_NL');
+  }
+  if(canonical){
+    canonical.setAttribute('href', `https://gravelsegments.com/?lang=${lang}`);
+  }
+
+  // ensure donate modal buttons are up-to-date for current language (again)
+  // done above
+
 }
 
 // init language from selector default
@@ -507,6 +625,18 @@ function about(){
 function hideAbout(){
   document.getElementById('about-backdrop').style.display = 'none';
   document.getElementById('about-modal').style.display = 'none';
+}
+
+/* Donate modal handlers */
+function openDonateModal(){
+  // ensure content up-to-date
+  setLang(CURRENT_LANG);
+  document.getElementById('donate-backdrop').style.display = 'block';
+  document.getElementById('donate-modal').style.display = 'block';
+}
+function hideDonate(){
+  document.getElementById('donate-backdrop').style.display = 'none';
+  document.getElementById('donate-modal').style.display = 'none';
 }
 
 /* --- Utilitaires --- */
@@ -726,7 +856,7 @@ map.on('zoomend', ()=>{
 });
 
 /* --- Initial --- */
-// ensure translations align with initial UI
+// ensure translations + meta align with initial UI
 setLang(document.getElementById('lang-select').value || 'fr');
 
 </script>
