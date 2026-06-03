@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gravel Segments – Explorer les chemins gravels</title>
+
+<!-- Canonical + hreflang alternates -->
+<link rel="canonical" href="https://gravelsegments.com/fr/">
+<link rel="alternate" href="https://gravelsegments.com/fr/" hreflang="fr">
+<link rel="alternate" href="https://gravelsegments.com/en/" hreflang="en">
+<link rel="alternate" href="https://gravelsegments.com/nl/" hreflang="nl">
+<link rel="alternate" href="https://gravelsegments.com/fr/" hreflang="x-default">
+
+<meta name="description" content="Gravel Segments est une carte interactive pour le vélo gravel : chemins roulants, pistes techniques, pavés et sentiers en Belgique. Basée sur OpenStreetMap.">
+<meta name="keywords" content="gravel, vélo gravel, chemins gravel, carte gravel, belgique, pistes gravel, revêtement, surface, gravier, sentier, cycle">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Gravel Segments – Explorer les chemins gravels">
+<meta property="og:description" content="Carte interactive pour découvrir les chemins gravel en Belgique.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gravelsegments.com/fr/">
+<meta property="og:site_name" content="Gravel Segments">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:locale:alternate" content="nl_NL">
+
+<!-- Favicon -->
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/logo-180.png">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+html, body { margin:0; padding:0; height:120%; font-family:Arial,sans-serif; }
+#map-container { position:relative; height:100vh; }
+#map { height:100%; }
+
+#controls-center {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+#controls-center button {
+  padding:14px 18px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#2e7d32;
+  color:white;
+  font-size:16px;
+  font-weight:600;
+}
+
+#controls-right {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  align-items:center;
+}
+
+#controls-right button {
+  padding:8px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#444;
+  color:white;
+  font-size:13px;
+}
+
+#btn-donate {
+  background: linear-gradient(180deg,#d81b60,#ad1457);
+  box-shadow: 0 4px 10px rgba(173,20,87,0.28);
+  padding:9px 12px;
+  font-weight:700;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+#lang-select {
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid rgba(0,0,0,0.1);
+  background:white;
+  font-size:13px;
+  cursor:pointer;
+}
+
+#legend {
+  position:absolute; bottom:20px; left:20px; z-index:1000;
+  background:rgba(255,255,255,0.95);
+  padding:12px; border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  font-size:14px;
+}
+.legend-item { display:flex; align-items:center; margin-bottom:6px; }
+.legend-item input { margin-right:6px; }
+.legend-color { width:16px; height:16px; margin-right:6px; border-radius:3px; }
+
+#tooltip {
+  position:absolute; pointer-events:none;
+  background:rgba(0,0,0,0.8); color:#fff;
+  padding:6px 8px; border-radius:4px;
+  font-size:12px; z-index:4000; display:none;
+}
+
+#osm-info {
+  position:absolute; bottom:80px; right:20px;
+  background:rgba(255,255,255,0.95);
+  padding:8px 10px; border-radius:8px;
+  font-size:12px;
+  z-index:3500;
+}
+
+#brand-box {
+  position:absolute; bottom:20px; right:20px;
+  z-index:3600;
+  background:rgba(255,255,255,0.95);
+  padding:8px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.25);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#brand-box img { height:40px; width:auto; display:block; }
+
+#progress {
+  position:absolute; top:60px; left:50%;
+  transform:translateX(-50%);
+  z-index:4100;
+  background:rgba(0,0,0,0.7); color:#fff;
+  padding:6px 10px; border-radius:6px; display:none;
+  font-size:13px;
+}
+
+#center-radius {
+  position:absolute; top:100px; left:50%;
+  transform:translateX(-50%);
+  z-index:3300;
+  background:rgba(255,255,255,0.95);
+  padding:6px 10px; border-radius:6px; display:none;
+  font-size:13px;
+}
+
+#controls-center small { display:block; font-size:11px; color:#eee; margin-top:6px; }
+
+.modal-backdrop { display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.35); z-index: 4990; }
+.modal {
+  display:none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 5000;
+  width: 420px;
+  max-width: calc(100% - 40px);
+  background: white;
+  border-radius:10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  padding: 16px;
+  font-size:14px;
+  max-height:80vh;
+  overflow-y:auto;
+}
+.modal header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.modal .close-btn {
+  background:transparent; border:none; font-size:18px; cursor:pointer;
+}
+
+#donate-modal .donate-buttons { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+.donate-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:8px;
+  border: none;
+  font-weight:700;
+  cursor:pointer;
+  font-size:15px;
+  color: white;
+}
+.donate-btn.paypal { background:#005ea6; }
+.donate-btn.buyme { background:#ffdd00; color:#2b2b2b; }
+
+@media (min-width: 600px){
+  #donate-modal .donate-buttons { flex-direction:row; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="map-container">
+  <div id="map"></div>
+  <div id="tooltip"></div>
+  <div id="progress"></div>
+  <div id="center-radius"></div>
+
+  <div id="controls-center">
+    <button id="btn-load" onclick="loadData()">Charger cette zone</button>
+    <small><label><input type="checkbox" id="use-radius" checked> <span id="use-radius-label">Utiliser radius max si zone trop grande</span></label></small>
+  </div>
+
+  <div id="controls-right">
+    <button id="btn-about" onclick="about()">À propos</button>
+    <button id="btn-osm" onclick="openOSM()">Suggérer une modification</button>
+    <button id="btn-donate" onclick="openDonateModal()">Faire un don ❤️</button>
+    <select id="lang-select" onchange="changeLang(this.value)" title="Sélectionner la langue">
+      <option value="fr">FR</option>
+      <option value="en">EN</option>
+      <option value="nl">NL</option>
+    </select>
+  </div>
+
+  <div id="legend">
+    <strong id="legend-title">Revêtements</strong><br><br>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('paves')">
+      <div class="legend-color" style="background:#999"></div><span data-i18n="paves">Pavés</span></label>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('gravel_roulant')">
+      <div class="legend-color" style="background:#7CFC00"></div><span data-i18n="gravel_roulant">Vrais Gravels roulants</span></label>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('chemin_12')">
+      <div class="legend-color" style="background:#228B22"></div><span data-i18n="chemin_12">Autres chemins roulants</span></label>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_surface')">
+      <div class="legend-color" style="background:#FFD700"></div><span data-i18n="grade3_surface">Chemins Gravel plus techniques</span></label>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade3_unknown')">
+      <div class="legend-color" style="background:#FF8C00"></div><span data-i18n="grade3_unknown">Chemins plus techniques</span></label>
+    <label class="legend-item"><input type="checkbox" checked onchange="toggleLayer('grade4')">
+      <div class="legend-color" style="background:#d32f2f"></div><span data-i18n="grade4">Chemins engagés</span></label>
+  </div>
+
+  <div id="osm-info">
+    <span id="osm-info-text">Données OpenStreetMap – indicatives uniquement</span>
+  </div>
+
+  <div id="brand-box" title="Gravel Segments">
+    <a href="https://gravelsegments.com" target="_blank" rel="noreferrer">
+      <img src="../assets/logo.png" alt="Gravel Segments logo">
+    </a>
+  </div>
+
+  <div id="about-backdrop" class="modal-backdrop" onclick="hideAbout()"></div>
+  <div id="about-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
+    <header>
+      <strong id="about-title">À propos</strong>
+      <button class="close-btn" onclick="hideAbout()" aria-label="Fermer">&times;</button>
+    </header>
+    <div id="about-content"></div>
+  </div>
+
+  <div id="donate-backdrop" class="modal-backdrop" onclick="hideDonate()"></div>
+  <div id="donate-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="donate-title">
+    <header>
+      <strong id="donate-title">Faire un don ❤️</strong>
+      <button class="close-btn" onclick="hideDonate()" aria-label="Fermer">&times;</button>
+    </header>
+    <div id="donate-content">
+      <div class="donate-buttons" id="donate-buttons-placeholder"></div>
+    </div>
+  </div>
+</div>
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"WebSite",
+      "@id":"https://gravelsegments.com/#website",
+      "url":"https://gravelsegments.com/",
+      "name":"Gravel Segments"
+    },
+    {
+      "@type":"WebPage",
+      "@id":"https://gravelsegments.com/fr/",
+      "url":"https://gravelsegments.com/fr/",
+      "name":"Gravel Segments – Explorer les chemins gravels",
+      "description":"Gravel Segments est une carte interactive pour le vélo gravel en Belgique. Basée sur OpenStreetMap.",
+      "inLanguage":"fr"
+    }
+  ]
+}
+</script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/translations.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// French version init
+document.getElementById('lang-select').value = 'fr';
+setLang('fr');
+
+function changeLang(lang) {
+  if(lang === 'fr') window.location.href = '/fr/';
+  if(lang === 'en') window.location.href = '/en/';
+  if(lang === 'nl') window.location.href = '/nl/';
+}
+</script>
+</body>
+</html>
